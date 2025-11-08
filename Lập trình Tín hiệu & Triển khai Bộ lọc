@@ -1,0 +1,67 @@
+%% =============================================
+%  Lập trình Tín hiệu & Triển khai Bộ lọc
+%  Dựa trên thiết kế của Thành viên 1
+%  Bộ lọc FIR thông thấp (fc = 4kHz, fs = 16kHz, cửa sổ Hamming)
+%  =============================================
+
+clc; clear; close all;
+
+%% 1. THIẾT LẬP THÔNG SỐ
+fs = 16000;        % Tần số lấy mẫu (Hz)
+t = 0:1/fs:1;      % 1s tín hiệu thử
+f1 = 1000;         % Tín hiệu 1 kHz (nằm trong dải thông)
+f2 = 6000;         % Tín hiệu 6 kHz (nằm ngoài dải thông)
+
+%% 2. TẠO TÍN HIỆU GỐC
+signal_clean = sin(2*pi*f1*t) + 0.5*sin(2*pi*f2*t);
+
+%% 3. THÊM NHIỄU NHÂN TẠO (Noise Injection)
+noise_power = 0.05;
+noise = sqrt(noise_power) * randn(size(signal_clean));
+signal_noisy = signal_clean + noise;
+
+%% 4. THIẾT KẾ BỘ LỌC FIR (theo phương pháp cửa sổ Hamming)
+fc = 4000;                          % Tần số cắt (Hz)
+wc = fc / (fs/2);                   % Chuẩn hóa tần số cắt
+N = 50;                             % Bậc lọc (có thể điều chỉnh)
+window = hamming(N+1);              % Cửa sổ Hamming
+b = fir1(N, wc, 'low', window);     % Thiết kế FIR lọc thông thấp
+a = 1;                              % Hệ số mẫu (FIR)
+
+%% 5. ÁP DỤNG BỘ LỌC
+signal_filtered = filter(b, a, signal_noisy);
+
+%% 6. HIỂN THỊ KẾT QUẢ
+figure;
+subplot(3,1,1);
+plot(t, signal_noisy);
+title('Tín hiệu có nhiễu');
+xlabel('Thời gian (s)'); ylabel('Biên độ');
+
+subplot(3,1,2);
+plot(t, signal_filtered);
+title('Tín hiệu sau khi lọc FIR');
+xlabel('Thời gian (s)'); ylabel('Biên độ');
+
+subplot(3,1,3);
+plot(t, signal_clean);
+title('Tín hiệu gốc (so sánh)');
+xlabel('Thời gian (s)'); ylabel('Biên độ');
+
+%% 7. PHỔ TẦN (FFT) ĐỂ KIỂM TRA HIỆU QUẢ LỌC
+nfft = 1024;
+f = linspace(0, fs/2, nfft/2);
+Y_noisy = abs(fft(signal_noisy, nfft));
+Y_filt  = abs(fft(signal_filtered, nfft));
+
+figure;
+plot(f, Y_noisy(1:nfft/2)); hold on;
+plot(f, Y_filt(1:nfft/2), 'LineWidth', 1.5);
+title('Phổ tần trước và sau lọc');
+xlabel('Tần số (Hz)'); ylabel('|Y(f)|');
+legend('Tín hiệu có nhiễu', 'Tín hiệu sau lọc');
+
+%% 8. LƯU FILE ÂM THANH
+audiowrite('signal_goc.wav', signal_clean, fs);
+audiowrite('signal_nhieu.wav', signal_noisy, fs);
+audiowrite('signal_loc.wav', signal_filtered, fs);
