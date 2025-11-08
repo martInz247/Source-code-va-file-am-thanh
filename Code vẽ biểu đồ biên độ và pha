@@ -1,0 +1,24 @@
+% Các thông số thiết kế
+Fs = 16000;         % Tần số lấy mẫu (Hz)
+Fc = 4000;          % Tần số cắt (Hz)
+N = 50;             % Bậc lọc
+Fn = Fs / 2;        % Tần số Nyquist
+
+% Thiết kế bộ lọc FIR thông thấp
+b = fir1(N, Fc/Fn, 'low', hamming(N+1));
+
+% 2. BIỂU ĐỒ ĐỘ TRỄ NHÓM 
+figure;
+[Gd, W] = grpdelay(b, 1, 1024, Fs);
+
+xlabel('Tần số (kHz)');
+ylabel('Độ trễ nhóm, \tau_g (ms)');
+title(['ĐỘ TRỄ NHÓM CỦA BỘ LỌC FIR (Pha Tuyến tính)']);
+
+% Vẽ đường tham chiếu lý thuyết
+Theoretical_GD_ms = (N/2)*(1/Fs)*1000; % Giá trị ms lý thuyết (1.5625 ms)
+yline(Theoretical_GD_ms, '--r', ['Lý thuyết: ', num2str(Theoretical_GD_ms, 4), ' ms']);
+
+axis([0 Fn/1000 Theoretical_GD_ms*0.5 Theoretical_GD_ms*1.5]); 
+
+grid on;
